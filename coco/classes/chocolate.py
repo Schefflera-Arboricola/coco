@@ -1,52 +1,57 @@
+import math
+
 __all__ = [
     "Chocolate",
 ]
 
 
 class Chocolate:
-    def __init__(self, amount, temp, cocoa_solids, cocoa_butter, milk_solids, sugar):
-        if temp is None:
-            temp = "room temp"
-        else:
-            self.temp = temp
-        if amount is None:
-            self.amount = 0
-        else:
-            self.amount = amount
+    ambient_temp = 20 + 273.15  # in Kelvin
+    specific_heat_capacity = (
+        2300  # J/kg·K for chocolate (converted to J/kg·K from J/g·K)
+    )
+    heat_transfer_coefficient = 10  # W/m²·K, an assumed constant for simplicity
+    power_input = 500  # W, an assumed constant for simplicity
 
-        self.type = self.classify(cocoa_solids, cocoa_butter, milk_solids, sugar)
-        self.melting_point = self.get_melting_point(amount, self.type)
-        self.tempering_point = self.get_tempering_point(self.type)
+    def __init__(
+        self, amount=0, temp=ambient_temp, melting_point=318.15, tempering_point=304.15
+    ):
+        self.amount = amount  # mass in kg
+        self.temp = temp  # in Kelvin
+        self.melting_point = melting_point  # 45°C by default
+        self.tempering_point = tempering_point  # 31°C by default
 
-    def classify(cocoa_solids, cocoa_butter, milk_solids, sugar):
-        threshold = 0.01
-        if cocoa_solids > threshold and milk_solids <= threshold:
-            return "dark"
-        elif cocoa_solids > threshold and milk_solids > threshold:
-            return "milk"
-        elif cocoa_solids <= threshold and milk_solids > threshold:
-            return "white"
-        else:
-            raise ValueError("Invalid chocolate type")
-
-    def get_melting_point(amount, type):
-        if amount == 0:
+    def cooling_time(self):
+        """Returns:
+        cooling_time: Time in seconds (s) for chocolate to cool to tempering temperature
+        """
+        if self.melting_point is None or self.tempering_point is None:
             return None
-        elif type == "dark":
-            return 31
-        elif type == "milk":
-            return 30
-        elif type == "white":
-            return 29
-        else:
-            raise ValueError("Invalid chocolate type")
+        surface_area = self.amount ** (2 / 3)  # Simplified assumption for surface area
+        cooling_time = (
+            (self.amount * self.specific_heat_capacity)
+            / (self.heat_transfer_coefficient * surface_area)
+            * math.log(
+                (self.temp - self.ambient_temp)
+                / (self.tempering_point - self.ambient_temp)
+            )
+        )
+        return cooling_time
 
-    def get_tempering_point(type):
-        if type == "dark":
-            return 88
-        elif type == "milk":
-            return 86
-        elif type == "white":
-            return 84
+    def melting_time(self):
+        """Returns:
+        melting_time: Time in seconds (s) to melt the chocolate
+        """
+        if self.melting_point is None:
+            return None
+        melting_time = (
+            self.amount * self.specific_heat_capacity * (self.melting_point - self.temp)
+        ) / self.power_input
+        return melting_time
+
+    def mix(self, other):
+        if isinstance(other, Chocolate) and self.temp == other.temp:
+            mixed_amount = self.amount + other.amount
+            return Chocolate(mixed_amount, self.temp)
         else:
-            raise ValueError("Invalid chocolate type")
+            raise ValueError("Both chocolates must be at the same temperature to mix.")
