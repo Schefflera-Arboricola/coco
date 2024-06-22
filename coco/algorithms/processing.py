@@ -1,4 +1,5 @@
 import time
+from coco.utils.backend import _dispatchable
 
 __all__ = [
     "temper",
@@ -6,6 +7,7 @@ __all__ = [
 ]
 
 
+@_dispatchable
 def temper(C):
     print("tempering...")
     t = C.cooling_time()
@@ -14,6 +16,7 @@ def temper(C):
     print(f"tempering done in {t:.2f} seconds")
 
 
+@_dispatchable
 def melt(C):
     print("melting...")
     t = C.melting_time()
