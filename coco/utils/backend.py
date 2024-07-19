@@ -1,8 +1,11 @@
 import warnings
 from importlib.metadata import entry_points
+import logging
 
 
 __all__ = ["_dispatchable"]
+
+coco_logger = logging.getLogger(__name__)
 
 
 def _get_backends(group):
@@ -33,10 +36,11 @@ def _dispatchable(func):
                     backend_module = backend_entry_point.load()
                     backend_func = getattr(backend_module, func.__name__, None)
                     if backend_func:
-                        print(f"Running {func.__name__} using {backend_name} backend")
+                        coco_logger.info(
+                            f"Running {func.__name__} with {backend_name} backend with args:{args} and kwargs:{kwargs}"
+                        )
                         result = backend_func(*args, **kwargs)
                         return result
-
         return func(*args, **kwargs)
 
     return wrapper
